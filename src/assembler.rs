@@ -9,7 +9,7 @@ fn main() -> std::io::Result<()> {
     }
 
     {
-        let mut file = File::open("empty_file.mexexe")?;
+        let mut file = File::open("empty_file.mixexe")?;
         // read the same file back into a Vec of bytes
         let mut buffer = Vec::<u8>::new();
         file.read_to_end(&mut buffer)?;

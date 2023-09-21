@@ -1,3 +1,4 @@
+mod binary_reader;
 use std::env;
 use std::process;
 
