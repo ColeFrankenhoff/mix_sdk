@@ -1,0 +1,6 @@
+Little endian 
+File extension should be .mixexe
+
+1. The first five bytes in the file should contain 109 105 120 101 120 101, the ascii for mixexe 
+2. The rest of the file should consist of "words", represented as a sign byte (0 for positive, 1 for negative) followed by five sign bytes
+3. The eof should be 255
