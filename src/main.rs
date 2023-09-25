@@ -1,4 +1,6 @@
 mod binary_reader;
+mod mixexe;
+mod virtual_machine;
 use std::env;
 use std::process;
 

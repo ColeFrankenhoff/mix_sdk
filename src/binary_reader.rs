@@ -1,19 +1,10 @@
 use std::fs::File;
 use std::io::prelude::*;
 use std::error::Error;
+use crate::mixexe::Word;
 
 
 //Struct to wrap a mix word
-#[derive(Debug, PartialEq, Eq)]
-pub struct Word{
-    is_positive: bool,
-    byte_0: u8,
-    byte_1: u8,
-    byte_2: u8,
-    byte_3: u8,
-    byte_4: u8,
-}
-
 //Result<[Word; 4000], &'static str>
 
 pub fn load_byte_vector(file_path: &str) -> Result<Vec<Word>,Box<dyn Error>>{
@@ -50,10 +41,6 @@ fn byte_vector_to_word_array(v: &Vec<u8>) -> Result<Vec<Word>, Box<dyn Error>>{
     Ok(memory)
 }
 
-
-fn ensure_valid_vector(v: &Vec<u8>) -> bool{
-    true
-}
 fn slice_to_word(slice: &[u8]) -> Word{
     if slice.len() != 6{
         panic!("Incorrectly sized word slice passed");
@@ -72,7 +59,7 @@ fn slice_to_word(slice: &[u8]) -> Word{
     let b4 = slice[5];
 
     let sign: bool = sign != 0;
-    Word{is_positive: sign, byte_0: b0, byte_1: b1, byte_2: b2, byte_3: b3, byte_4: b4}
+    Word{is_negative: sign, byte_0: b0, byte_1: b1, byte_2: b2, byte_3: b3, byte_4: b4}
 }
 
 
@@ -87,58 +74,18 @@ mod tests {
         let test_file_path = "valid_test.mixexe";
         fs::write(test_file_path, valid_file_content).expect("Unable to write test file");
         let expected_result = Word{
-            is_positive: true,
+            is_negative: false,
             byte_0: 1,
-            byte_1: 1,
-            byte_2: 1,
-            byte_3: 1,
-            byte_4: 1,
+            byte_1: 2,
+            byte_2: 3,
+            byte_3: 4,
+            byte_4: 5,
         };
         let v = load_byte_vector(test_file_path).unwrap();
         assert_eq!(v.len(), 1);
         assert_eq!(v[0], expected_result) 
         
 
-
-    }
-    fn test_read_to_byte_vector() {
-        use std::fs;
-        println!("Test of binary file called");
-        // Create a temporary file for testing
-        let test_file_content: &[u8] = &[1, 2, 3, 4, 5, 6];
-        let test_file_path = "test_file.mixexe";
-        fs::write(test_file_path, test_file_content).expect("Unable to write test file");
-
-        // Call the function and check the result
-        let result = load_byte_vector(test_file_path);
-        assert!(result.is_ok());
-
-        let buffer = result.unwrap();
-        assert_eq!(buffer, test_file_content);
-
-        // Clean up the temporary file
-        fs::remove_file(test_file_path).expect("Unable to remove test file");
     }
     
-    #[test]
-    fn test_byte_to_words(){
-        let v: Vec<u8> = vec![1,2,3,4,5, 6];
-        let array = byte_vector_to_word_array(&v);
-
-    }
-    
-    #[test]
-    fn test_slice_to_word(){
-        let v: &[u8] = &[0,1,2,3,4,5];
-        let w = slice_to_word(v);
-
-        dbg!(w);
-        
-
-        panic!("Another half assed test")
-    }
-
-    
-
-    // More unit tests for other functions...
 }
