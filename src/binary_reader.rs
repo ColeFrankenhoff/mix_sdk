@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::prelude::*;
 use std::error::Error;
-use crate::mixexe::Word;
+use crate::virtual_machine::Word;
 
 
 //Struct to wrap a mix word
