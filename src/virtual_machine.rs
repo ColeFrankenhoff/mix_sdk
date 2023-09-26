@@ -87,24 +87,24 @@ impl VirtualMachine{
             comparison_toggle
         }
     }
-    pub fn get_word(&self, address: usize) -> Result<Word, &'static str>{
-        if self.memory.len() - 1 < address{
+    pub fn get_word(&self, address: u32) -> Result<Word, &'static str>{
+        if self.memory.len() as u32 - 1 < address{
             return Err("Index out of range");
         }
 
         if self.memory.len() > 4000{
             return Err("Memory stores way too many possible values")
         }
-        let v = self.memory[address];
+        let v = self.memory[address as usize];
         Ok(v)
     }
 
-    pub fn set_word(&mut self, address: usize, updated_value: Word) -> Result<(), &'static str>{
-        if address > self.memory.len() - 1{
+    pub fn set_word(&mut self, address: u32, updated_value: Word) -> Result<(), &'static str>{
+        if address > self.memory.len() as u32 - 1{
             return Err("Index out of range");
         }
 
-        self.memory[address] = updated_value;
+        self.memory[address as usize] = updated_value;
         Ok(())
     }
 }

@@ -5,19 +5,28 @@ use crate::virtual_machine::Word;
 use crate::virtual_machine::TwoByteWord;
 
 
+
 ///Execute the contents of a virtual machine, starting at the value specified by rsp
-///
+///Take ownership of the vm's memory
 pub fn run_vm(virtual_machine: VirtualMachine){
     
     let mut execution_time = 0;
-    let 
+    let vm_pointer = &mut virtual_machine;
     loop{
         let rsp = virtual_machine.rsp;
         let w = virtual_machine.get_word(rsp);
+
     }
 }
 
-fn execute_instruction(virtual_machine: &mut VirtualMachine, instruction: Word){
 
+//Each MIXAL instruction will either return an execution time or a halt
+enum InstructionResult{
+    HLT,
+    ExecutionTime(i32)
 }
-]
+
+fn execute_instruction(virtual_machine: &mut VirtualMachine, instruction: Word) -> InstructionResult {
+    InstructionResult::HLT
+}
+
