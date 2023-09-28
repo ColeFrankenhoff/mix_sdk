@@ -52,14 +52,14 @@ fn slice_to_word(slice: &[u8]) -> Word{
     if slice.iter().max().unwrap() > &100{
         panic!("File contains too big of a value");
     }
-    let b0 = slice[1];
-    let b1 = slice[2];
-    let b2 = slice[3];
-    let b3 = slice[4];
-    let b4 = slice[5];
+    let b1 = slice[1];
+    let b2 = slice[2];
+    let b3 = slice[3];
+    let b4 = slice[4];
+    let b5 = slice[5];
 
     let sign: bool = sign != 0;
-    Word{is_negative: sign, byte_0: b0, byte_1: b1, byte_2: b2, byte_3: b3, byte_4: b4}
+    Word{is_negative: sign, byte_1: b1, byte_2: b2, byte_3: b3, byte_4: b4, byte_5: b5}
 }
 
 
@@ -75,11 +75,11 @@ mod tests {
         fs::write(test_file_path, valid_file_content).expect("Unable to write test file");
         let expected_result = Word{
             is_negative: false,
-            byte_0: 1,
-            byte_1: 2,
-            byte_2: 3,
-            byte_3: 4,
-            byte_4: 5,
+            byte_1: 1,
+            byte_2: 2,
+            byte_3: 3,
+            byte_4: 4,
+            byte_5: 5,
         };
         let v = load_byte_vector(test_file_path).unwrap();
         assert_eq!(v.len(), 1);

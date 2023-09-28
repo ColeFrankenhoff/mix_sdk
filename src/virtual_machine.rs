@@ -1,27 +1,36 @@
 #[derive(Debug, PartialEq, Eq, Default, Clone, Copy)]
 pub struct Word{
     pub is_negative: bool,
-    pub byte_0: u8,
     pub byte_1: u8,
     pub byte_2: u8,
     pub byte_3: u8,
     pub byte_4: u8,
+    pub byte_5: u8,
 }
+
+//A MIX Word, with a sign bit and five one-indexed bytes
 impl Word{
     pub fn zero()->Word{
-        Word {is_negative: true, byte_0: 0, byte_1: 0, byte_2: 0, byte_3: 0, byte_4: 0}
+        Word {is_negative: true, byte_1: 0, byte_2: 0, byte_3: 0, byte_4: 0, byte_5: 0}
     }
 }
+
 #[derive(Debug, PartialEq, Eq, Default)]
 pub struct TwoByteWord{
     is_negative: bool,
-    byte_0: u8,
     byte_1: u8,
+    byte_2: u8,
 }
 
 impl TwoByteWord{
     pub fn zero()->TwoByteWord{
-        TwoByteWord {is_negative: false, byte_0: 0, byte_1: 0}
+        TwoByteWord {is_negative: false, byte_1: 0, byte_2: 0}
+    }
+
+    pub fn get_value(&self)->i32{
+        let x = self.byte_1 as i32;
+        let y = self.byte_2 as i32;
+        x * 64 + y
     }
 }
 
@@ -122,11 +131,11 @@ mod tests {
             word,
             Word {
                 is_negative: true,
-                byte_0: 0,
                 byte_1: 0,
                 byte_2: 0,
                 byte_3: 0,
-                byte_4: 0
+                byte_4: 0,
+                byte_5: 0
             }
         );
     }
@@ -138,8 +147,8 @@ mod tests {
             two_byte_word,
             TwoByteWord {
                 is_negative: false,
-                byte_0: 0,
-                byte_1: 0
+                byte_1: 0,
+                byte_2: 0
             }
         );
     }
@@ -166,11 +175,11 @@ mod tests {
         let mut vm = VirtualMachine::new(memory, 3, 100);
         let new_word = Word {
             is_negative: false,
-            byte_0: 1,
-            byte_1: 2,
-            byte_2: 3,
-            byte_3: 4,
-            byte_4: 5,
+            byte_1: 1,
+            byte_2: 2,
+            byte_3: 3,
+            byte_4: 4,
+            byte_5: 5,
         };
 
         // Set a word at index 1
