@@ -81,31 +81,231 @@ impl PartialField{
 }
 
 
+///A struct representing a MIX instruction, with format: M = indexed memory address,
+///modifier = the modifier or field specification, opcode=the opcode
+#[allow(non_snake_case)]
+#[derive(Debug, PartialEq, Eq)]
+struct Instruction{
+    M: u32,
+    modifier: u8,
+    opcode: u8,
+}
+
+
+fn call_instruction(mut virtual_machine: &VirtualMachine, instruction: Word) -> InstructionResult{
+    let instruction = load_instruction(virtual_machine, &instruction);
+    match instruction.modifier{
+        0=>virtual_machine.NOP(instruction.M, instruction.modifier),
+    }
+}
 //Execute the instruction specified by the word, and return either a halt or the execution time
-fn call_instruction(mut virtual_machine: &VirtualMachine, instruction: Word) -> InstructionResult {
+fn load_instruction(virtual_machine: &VirtualMachine, instruction: &Word) -> Instruction{
     let sign = instruction.is_negative;
     let addr_byte_one = instruction.byte_1;
     let addr_byte_two = instruction.byte_2;
+    
+    
+    let memory = TwoByteWord{is_negative: sign, byte_1: addr_byte_one, byte_2: addr_byte_two};
 
     let index = instruction.byte_3;
     let modifier = instruction.byte_4;
     let opcode = instruction.byte_5;
 
-    let index: TwoByteWord = match index{
+    let byte_size = virtual_machine.byte_size;
+    let index_register_value = match index{
         0 => 0,
-        1 => virtual_machine.rI1,
-        2 => virtual_machine.rI2,
-        3 => virtual_machine.rI3,
-        4 => virtual_machine.rI4,
-        5 => virtual_machine.rI5,
-        6 => virtual_machine.rI6,
+        1 => virtual_machine.rI1.get_value(byte_size),
+        2 => virtual_machine.rI2.get_value(byte_size),
+        3 => virtual_machine.rI3.get_value(byte_size),
+        4 => virtual_machine.rI4.get_value(byte_size),
+        5 => virtual_machine.rI5.get_value(byte_size),
+        6 => virtual_machine.rI6.get_value(byte_size),
         _ => panic!("Invalid index")
-    };
-    
-    InstructionResult::HLT
+    } as i32;
+   
+    Instruction{M: (memory.get_value(byte_size) + index_register_value) as u32, modifier, opcode}
 
 }
 
+
+
+#[allow(non_snake_case)]
+
+
+///Implementation for the MIX ISA. Every instruction depends on an opcode, indexed
+///adress, and modification field. It is assumed that the address has already been indexed.
+impl VirtualMachine{
+    pub fn NOP(self, address: u32, field: u8){
+
+    }
+
+    pub fn ADD(self, address: u32, field: u8){
+
+    }
+
+    pub fn SUB(self, address: u32, field: u8){
+
+    }
+    pub fn MUL(self, address: u32, field: u8){
+
+    }
+    pub fn DIV(self, address: u32, field: u8){
+
+    }
+    pub fn special(self, address: u32, field: u8){
+
+    }
+    pub fn shift(self, address: u32, field: u8){
+
+    }
+    pub fn MOVE(self, address: u32, field: u8){
+
+    }
+    pub fn LDA(self, address: u32, field: u8){
+
+    }
+    pub fn LD1(self, address: u32, field: u8){
+
+    }
+    pub fn LD2(self, address: u32, field: u8){
+
+    }
+    pub fn LD3(self, address: u32, field: u8){
+
+    }
+    pub fn LD4(self, address: u32, field: u8){
+
+    }
+    pub fn LD5(self, address: u32, field: u8){
+
+    }
+    pub fn LD6(self, address: u32, field: u8){
+
+    }
+    pub fn LDX(self, address: u32, field: u8){
+
+    }
+    pub fn LDAN(self, address: u32, field: u8){
+
+    }
+    pub fn LD1N(self, address: u32, field: u8){
+
+    }
+    pub fn LD2N(self, address: u32, field: u8){
+
+    }
+    pub fn LD3N(self, address: u32, field: u8){
+
+    }
+    pub fn LD4N(self, address: u32, field: u8){
+
+    }
+    pub fn LD5N(self, address: u32, field: u8){
+
+    }
+    pub fn LD6N(self, address: u32, field: u8){
+
+    }
+    pub fn LDXN(self, address: u32, field: u8){
+
+    }
+
+
+    //Storing operators
+    pub fn STA(self, address: u32, field: u8){
+
+    }
+    pub fn ST1(self, address: u32, field: u8){
+
+    }
+    pub fn ST2(self, address: u32, field: u8){
+
+    }
+    pub fn ST3(self, address: u32, field: u8){
+
+    }
+    pub fn ST4(self, address: u32, field: u8){
+
+    }
+    pub fn ST5(self, address: u32, field: u8){
+
+    }
+    pub fn ST6(self, address: u32, field: u8){
+
+    }
+    pub fn STX(self, address: u32, field: u8){
+
+    }
+    pub fn STZ(self, address: u32, field: u8){
+
+    }
+    pub fn JBUS(self, address: u32, field: u8){
+
+    }
+    pub fn IOC(self, address: u32, field: u8){
+
+    }
+    pub fn IN(self, address: u32, field: u8){
+
+    }
+    pub fn OUT(self, address: u32, field: u8){
+
+    }
+   
+    pub fn JRED(self, address: u32, field: u8){
+
+    }
+   
+    pub fn jump(self, address: u32, field: u8){
+
+    }
+   
+    pub fn JA(self, address: u32, field: u8){
+
+    }
+   
+    pub fn J1(self, address: u32, field: u8){
+
+    }
+   
+    pub fn J2(self, address: u32, field: u8){
+
+    }
+   
+    pub fn J3(self, address: u32, field: u8){
+
+    }
+    pub fn J4(self, address: u32, field: u8){
+
+    }
+   
+    pub fn J5(self, address: u32, field: u8){
+
+    }
+   
+   
+    pub fn J6(self, address: u32, field: u8){
+
+    }
+   
+   
+    pub fn JX(self, address: u32, field: u8){
+
+    }
+
+    pub fn increment_decrement_A(self, address: u32, field: u8){
+    }
+    pub fn increment_decrement_(self, address: u32, field: u8){
+    }
+    pub fn increment_decrement_A(self, address: u32, field: u8){
+    }
+    pub fn increment_decrement_A(self, address: u32, field: u8){
+    }
+    pub fn increment_decrement_A(self, address: u32, field: u8){
+    }
+   
+   
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -132,6 +332,33 @@ mod tests {
         assert_eq!(partial_field.byte_3, Some(30)); 
         assert_eq!(partial_field.byte_4, Some(40)); 
         assert_eq!(partial_field.byte_5, None); 
+
+    }
+
+    #[test]
+    fn test_load_instruction(){
+
+        let m: Vec<Word> = Vec::new();
+        let mut mock_vm = VirtualMachine::new(m, 0, 64);
+        let mut word = Word{is_negative: false, byte_1: 0, byte_2: 0, byte_3: 0, byte_4: 0, byte_5: 0};
+        let instr = load_instruction(&mock_vm, &word);
+        let mut expected = Instruction{M: 0, modifier: 0, opcode: 0};
+        assert_eq!(instr, expected);
+        
+        mock_vm.rI1.store_value(300, 64);
+
+        word.is_negative = true;
+        word.byte_1 = 3;
+        word.byte_3 = 1;
+        word.byte_4 = 50;
+        word.byte_5 = 30;
+        word.is_negative = true;
+        let instr = load_instruction(&mock_vm, &word);
+    
+        expected.M = (-(3 * 64) + 300) as u32;
+        expected.modifier = 50;
+        expected.opcode = 30;
+        assert_eq!(instr, expected);
 
     }
 }
