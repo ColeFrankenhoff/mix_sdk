@@ -11,7 +11,54 @@ pub struct Word{
 //A MIX Word, with a sign bit and five one-indexed bytes
 impl Word{
     pub fn zero()->Word{
-        Word {is_negative: true, byte_1: 0, byte_2: 0, byte_3: 0, byte_4: 0, byte_5: 0}
+        Word {is_negative: false, byte_1: 0, byte_2: 0, byte_3: 0, byte_4: 0, byte_5: 0}
+    }
+
+    pub fn get_value(&self, byte_size: i32)->i32{
+        if byte_size > 100 || byte_size < 64 {
+            panic!("Invalid bytesize")
+        }
+        
+
+        let b1 = self.byte_1 as i32;
+        let b2 = self.byte_2 as i32;
+        let b3 = self.byte_3 as i32;
+        let b4 = self.byte_4 as i32;
+        let b5 = self.byte_5 as i32;
+        let magnitude = b5 + b4 * byte_size + b3 * byte_size.pow(2) + b2 * byte_size.pow(3) + b1 * byte_size.pow(4);
+        match self.is_negative{
+            true=>magnitude * -1,
+            _=> magnitude
+        }
+        
+
+    }
+
+    //Todo: bugs involving positive and negative zero
+    pub fn store_value(&mut self, value: i32, byte_size: i32){
+        if byte_size > 100 || byte_size < 64 {
+            panic!("Invalid bytesize")
+        }
+        
+
+        let mut val = value.abs();
+        self.byte_5 = (val % byte_size) as u8;
+        val /= byte_size;
+        self.byte_4 = (val % byte_size) as u8;
+        val /= byte_size;
+        self.byte_3 = (val % byte_size) as u8;
+        val /= byte_size;
+        self.byte_2 = (val % byte_size) as u8;
+        val /= byte_size;
+        self.byte_1 = (val % byte_size) as u8;
+
+        self.is_negative = value < 0;
+        dbg!(self.is_negative);
+    }
+    pub fn add(&mut self, to_add: &Word, byte_size: i32){
+        let x = to_add.get_value(byte_size);
+        let y = x + self.get_value(byte_size);
+        self.store_value(y, byte_size);
     }
 }
 
@@ -134,7 +181,7 @@ impl VirtualMachine{
             return Err("Memory stores way too many possible values")
         }
         let v = self.memory[address as usize];
-        Ok(v)
+        Ok(v.clone())
     }
 
     pub fn set_word(&mut self, address: u32, updated_value: Word) -> Result<(), &'static str>{
@@ -159,7 +206,7 @@ mod tests {
         assert_eq!(
             word,
             Word {
-                is_negative: true,
+                is_negative: false,
                 byte_1: 0,
                 byte_2: 0,
                 byte_3: 0,
@@ -259,6 +306,48 @@ mod tests {
                 w2.store_value(value_two, byte_size);
                 w1.add(&w2, byte_size);
                 assert_eq!(w1.get_value(byte_size), value_one + value_two);
+            }
+        }
+    }    
+
+    #[test]
+    fn test_get_word_get_value(){
+        let mut word = Word::zero();
+        assert_eq!(word.get_value(64), 0);
+
+        word.byte_1 = 1;
+        assert_eq!(word.get_value(64), 16777216);
+    
+    }
+
+    #[test]
+    fn test_store_word_value(){
+        let mut word = Word::zero();
+
+        for val in -2000..2000{
+            for byte in 64..101{
+                word.store_value(val, byte);
+                assert_eq!(word.get_value(byte), val);
+            }
+        }
+    }
+
+    #[test]
+    fn word_addition_test(){
+        let mut w1 = Word::zero();
+        let mut w2 = Word::zero();
+
+        //Yes, this is an unnecessary and useless amount of test
+        //cases and I should have the edge cases tested. But rust runs this quickly which is
+        //very satisfying
+        for val in -20000..20000{
+            for byte in 64..101{
+                let x = val;
+                let y = val * val % 4;
+                w1.store_value(x, byte);
+                w2.store_value(y, byte);
+                w1.add(&w2, byte);
+                assert_eq!(w1.get_value(byte), x + y);
             }
         }
     }

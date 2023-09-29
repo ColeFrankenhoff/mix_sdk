@@ -17,20 +17,16 @@ pub fn run_vm(mut virtual_machine: VirtualMachine){
         
         let res = call_instruction(&mut virtual_machine, w);
 
-        if let InstructionResult::ExecutionTime(c) = res{
-            execution_time += c;
+        //Sentinel value for halt instruction
+        if res = -1 {
+            execution_time += 1;
+            break
         }
         else{
-            break;
+            execution_time += res;
         }
+
     }
-}
-
-
-//Each MIXAL instruction will either return an execution time or a halt
-enum InstructionResult{
-    HLT,
-    ExecutionTime(i32)
 }
 
 
@@ -78,6 +74,9 @@ impl PartialField{
         value
             
     }
+    fn get_value(&self, byte_size: u32)->i32{
+        f
+    }
 }
 
 
@@ -92,12 +91,85 @@ struct Instruction{
 }
 
 
-fn call_instruction(mut virtual_machine: &VirtualMachine, instruction: Word) -> InstructionResult{
+
+///Switching table to call instruction based on opcode
+///Returns either an execution time or -1
+///Potential optimization: hash the opcode field pair to call instructions 
+///defined by partial fields in one instruction
+///
+fn call_instruction(mut virtual_machine: &VirtualMachine, instruction: Word) -> i32{
     let instruction = load_instruction(virtual_machine, &instruction);
     match instruction.modifier{
         0=>virtual_machine.NOP(instruction.M, instruction.modifier),
+        1=>virtual_machine.ADD(instruction.M, instruction.modifier),
+        2=>virtual_machine.SUB(instruction.M, instruction.modifier),
+        3=>virtual_machine.MUL(instruction.M, instruction.modifier),
+        4=>virtual_machine.DIV(instruction.M, instruction.modifier),
+        5=>virtual_machine.special(instruction.M, instruction.modifier),
+        6=>virtual_machine.shift(instruction.M, instruction.modifier),
+        7=>virtual_machine.MOVE(instruction.M, instruction.modifier),
+        8=>virtual_machine.LDA(instruction.M, instruction.modifier),
+        9=>virtual_machine.LD1(instruction.M, instruction.modifier),
+        10=>virtual_machine.LD2(instruction.M, instruction.modifier),
+        11=>virtual_machine.LD3(instruction.M, instruction.modifier),
+        12=>virtual_machine.LD4(instruction.M, instruction.modifier),
+        13=>virtual_machine.LD5(instruction.M, instruction.modifier),
+        14=>virtual_machine.LD6(instruction.M, instruction.modifier),
+        15=>virtual_machine.LDX(instruction.M, instruction.modifier),
+        16=>virtual_machine.LDAN(instruction.M, instruction.modifier),
+        17=>virtual_machine.LD1N(instruction.M, instruction.modifier),
+        18=>virtual_machine.LD2N(instruction.M, instruction.modifier),
+        19=>virtual_machine.LD3N(instruction.M, instruction.modifier),
+        20=>virtual_machine.LD4N(instruction.M, instruction.modifier),
+        21=>virtual_machine.LD5N(instruction.M, instruction.modifier),
+        22=>virtual_machine.LD6N(instruction.M, instruction.modifier),
+        23=>virtual_machine.LDXN(instruction.M, instruction.modifier),
+        24=>virtual_machine.STA(instruction.M, instruction.modifier),
+        25=>virtual_machine.ST1(instruction.M, instruction.modifier),
+        26=>virtual_machine.ST2(instruction.M, instruction.modifier),
+        27=>virtual_machine.ST3(instruction.M, instruction.modifier),
+        28=>virtual_machine.ST4(instruction.M, instruction.modifier),
+        29=>virtual_machine.ST5(instruction.M, instruction.modifier),
+        30=>virtual_machine.ST6(instruction.M, instruction.modifier),
+        31=>virtual_machine.STX(instruction.M, instruction.modifier),
+        32=>virtual_machine.STJ(instruction.M, instruction.modifier),
+        33=>virtual_machine.STZ(instruction.M, instruction.modifier),
+        34=>virtual_machine.JBUS(instruction.M, instruction.modifier),
+        35=>virtual_machine.IOC(instruction.M, instruction.modifier),
+        36=>virtual_machine.IN(instruction.M, instruction.modifier),
+        37=>virtual_machine.OUT(instruction.M, instruction.modifier),
+        38=>virtual_machine.JRED(instruction.M, instruction.modifier),
+        39=>virtual_machine.jump(instruction.M, instruction.modifier),
+        40=>virtual_machine.JA(instruction.M, instruction.modifier),
+        41=>virtual_machine.J1(instruction.M, instruction.modifier),
+        42=>virtual_machine.J2(instruction.M, instruction.modifier),
+        43=>virtual_machine.J3(instruction.M, instruction.modifier),
+        44=>virtual_machine.J4(instruction.M, instruction.modifier),
+        45=>virtual_machine.J5(instruction.M, instruction.modifier),
+        46=>virtual_machine.J6(instruction.M, instruction.modifier),
+        47=>virtual_machine.JX(instruction.M, instruction.modifier),
+        48=>virtual_machine.increment_decrement_A(instruction.M, instruction.modifier),
+        49=>virtual_machine.increment_decrement_1(instruction.M, instruction.modifier),
+        50=>virtual_machine.increment_decrement_2(instruction.M, instruction.modifier),
+        51=>virtual_machine.increment_decrement_3(instruction.M, instruction.modifier),
+        52=>virtual_machine.increment_decrement_4(instruction.M, instruction.modifier),
+        53=>virtual_machine.increment_decrement_5(instruction.M, instruction.modifier),
+        54=>virtual_machine.increment_decrement_6(instruction.M, instruction.modifier),
+        55=>virtual_machine.increment_decrement_X(instruction.M, instruction.modifier),
+        56=>virtual_machine.CMPA(instruction.M, instruction.modifier),
+        57=>virtual_machine.CMP1(instruction.M, instruction.modifier),
+        58=>virtual_machine.CMP2(instruction.M, instruction.modifier),
+        59=>virtual_machine.CMP3(instruction.M, instruction.modifier),
+        60=>virtual_machine.CMP4(instruction.M, instruction.modifier),
+        61=>virtual_machine.CMP5(instruction.M, instruction.modifier),
+        62=>virtual_machine.CMP6(instruction.M, instruction.modifier),
+        63=>virtual_machine.CMPX(instruction.M, instruction.modifier),
+        _=>panic!("Invalid opcode"),
     }
+
 }
+    
+
 //Execute the instruction specified by the word, and return either a halt or the execution time
 fn load_instruction(virtual_machine: &VirtualMachine, instruction: &Word) -> Instruction{
     let sign = instruction.is_negative;
@@ -134,177 +206,235 @@ fn load_instruction(virtual_machine: &VirtualMachine, instruction: &Word) -> Ins
 
 ///Implementation for the MIX ISA. Every instruction depends on an opcode, indexed
 ///adress, and modification field. It is assumed that the address has already been indexed.
+///There's probably some better way to do this, maybe involving traits
 impl VirtualMachine{
-    pub fn NOP(self, address: u32, field: u8){
+    pub fn NOP(&mut self, address: u32, field: u8) -> i32{
+        1
+    }
+
+   pub fn ADD(&mut self, address: u32, field: u8) -> i32{
+       let v = self.get_word(address).unwrap();
+       self.rA.add(&v, self.byte_size);
+       2
+    }
+
+    pub fn SUB(&mut self, address: u32, field: u8) -> i32{
+       let mut v = self.get_word(address).unwrap();
+       v.is_negative = !v.is_negative;
+       self.rA.add(&v, self.byte_size);
+       2
+    }
+
+    pub fn MUL(&mut self, address: u32, field: u8) -> i32{
+        
+    }
+    
+    pub fn DIV(&mut self, address: u32, field: u8) -> i32{
 
     }
 
-    pub fn ADD(self, address: u32, field: u8){
+    pub fn special(&mut self, address: u32, field: u8) -> i32{
 
     }
 
-    pub fn SUB(self, address: u32, field: u8){
+    pub fn shift(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn MUL(self, address: u32, field: u8){
+
+    pub fn MOVE(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn DIV(self, address: u32, field: u8){
+
+    pub fn LDA(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn special(self, address: u32, field: u8){
+
+    pub fn LD1(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn shift(self, address: u32, field: u8){
+    
+    pub fn LD2(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn MOVE(self, address: u32, field: u8){
+    pub fn LD3(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn LDA(self, address: u32, field: u8){
+    pub fn LD4(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn LD1(self, address: u32, field: u8){
+    pub fn LD5(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn LD2(self, address: u32, field: u8){
+    pub fn LD6(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn LD3(self, address: u32, field: u8){
+    pub fn LDX(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn LD4(self, address: u32, field: u8){
+    pub fn LDAN(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn LD5(self, address: u32, field: u8){
+    pub fn LD1N(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn LD6(self, address: u32, field: u8){
+    pub fn LD2N(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn LDX(self, address: u32, field: u8){
+    pub fn LD3N(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn LDAN(self, address: u32, field: u8){
+    pub fn LD4N(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn LD1N(self, address: u32, field: u8){
+    pub fn LD5N(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn LD2N(self, address: u32, field: u8){
+    pub fn LD6N(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn LD3N(self, address: u32, field: u8){
-
-    }
-    pub fn LD4N(self, address: u32, field: u8){
-
-    }
-    pub fn LD5N(self, address: u32, field: u8){
-
-    }
-    pub fn LD6N(self, address: u32, field: u8){
-
-    }
-    pub fn LDXN(self, address: u32, field: u8){
+    pub fn LDXN(&mut self, address: u32, field: u8) -> i32{
 
     }
 
 
     //Storing operators
-    pub fn STA(self, address: u32, field: u8){
+    pub fn STA(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn ST1(self, address: u32, field: u8){
+    pub fn ST1(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn ST2(self, address: u32, field: u8){
+    pub fn ST2(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn ST3(self, address: u32, field: u8){
+    pub fn ST3(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn ST4(self, address: u32, field: u8){
+    pub fn ST4(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn ST5(self, address: u32, field: u8){
+    pub fn ST5(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn ST6(self, address: u32, field: u8){
+    pub fn ST6(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn STX(self, address: u32, field: u8){
+    pub fn STX(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn STZ(self, address: u32, field: u8){
+
+    pub fn STJ(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn JBUS(self, address: u32, field: u8){
+    pub fn STZ(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn IOC(self, address: u32, field: u8){
+    pub fn JBUS(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn IN(self, address: u32, field: u8){
+    pub fn IOC(&mut self, address: u32, field: u8) -> i32{
 
     }
-    pub fn OUT(self, address: u32, field: u8){
+    pub fn IN(&mut self, address: u32, field: u8) -> i32{
 
     }
-   
-    pub fn JRED(self, address: u32, field: u8){
-
-    }
-   
-    pub fn jump(self, address: u32, field: u8){
+    pub fn OUT(&mut self, address: u32, field: u8) -> i32{
 
     }
    
-    pub fn JA(self, address: u32, field: u8){
+    pub fn JRED(&mut self, address: u32, field: u8) -> i32{
 
     }
    
-    pub fn J1(self, address: u32, field: u8){
+    pub fn jump(&mut self, address: u32, field: u8) -> i32{
 
     }
    
-    pub fn J2(self, address: u32, field: u8){
+    pub fn JA(&mut self, address: u32, field: u8) -> i32{
 
     }
    
-    pub fn J3(self, address: u32, field: u8){
-
-    }
-    pub fn J4(self, address: u32, field: u8){
+    pub fn J1(&mut self, address: u32, field: u8) -> i32{
 
     }
    
-    pub fn J5(self, address: u32, field: u8){
+    pub fn J2(&mut self, address: u32, field: u8) -> i32{
+
+    }
+   
+    pub fn J3(&mut self, address: u32, field: u8) -> i32{
+
+    }
+    pub fn J4(&mut self, address: u32, field: u8) -> i32{
+
+    }
+   
+    pub fn J5(&mut self, address: u32, field: u8) -> i32{
 
     }
    
    
-    pub fn J6(self, address: u32, field: u8){
+    pub fn J6(&mut self, address: u32, field: u8) -> i32{
 
     }
    
    
-    pub fn JX(self, address: u32, field: u8){
+    pub fn JX(&mut self, address: u32, field: u8) -> i32{
 
     }
 
-    pub fn increment_decrement_A(self, address: u32, field: u8){
+    pub fn increment_decrement_A(&mut self, address: u32, field: u8) -> i32{
     }
-    pub fn increment_decrement_(self, address: u32, field: u8){
+
+    pub fn increment_decrement_1(&mut self, address: u32, field: u8) -> i32{
     }
-    pub fn increment_decrement_A(self, address: u32, field: u8){
+    
+    pub fn increment_decrement_2(&mut self, address: u32, field: u8) -> i32{
     }
-    pub fn increment_decrement_A(self, address: u32, field: u8){
+
+    pub fn increment_decrement_3(&mut self, address: u32, field: u8) -> i32{
     }
-    pub fn increment_decrement_A(self, address: u32, field: u8){
+
+    pub fn increment_decrement_4(&mut self, address: u32, field: u8) -> i32{
     }
-   
-   
+    
+    pub fn increment_decrement_5(&mut self, address: u32, field: u8) -> i32{
+    }
+
+    pub fn increment_decrement_6(&mut self, address: u32, field: u8) -> i32{
+    }
+    
+    pub fn increment_decrement_X(&mut self, address: u32, field: u8) -> i32{
+    }
+
+    pub fn CMPA(&mut self, address: u32, field: u8) -> i32{
+
+    }
+    pub fn CMP1(&mut self, address: u32, field: u8) -> i32{
+
+    }
+    pub fn CMP2(&mut self, address: u32, field: u8) -> i32{
+
+    }
+    pub fn CMP3(&mut self, address: u32, field: u8) -> i32{
+
+    }
+    pub fn CMP4(&mut self, address: u32, field: u8) -> i32{
+
+    }
+    pub fn CMP5(&mut self, address: u32, field: u8) -> i32{
+
+    }
+    pub fn CMP6(&mut self, address: u32, field: u8) -> i32{
+
+    }
+    pub fn CMPX(&mut self, address: u32, field: u8) -> i32{
+
+    }
+
+    fn load_V(&self, address: u32, field: u8) -> Word{
+        let partial = PartialField::new(&self.get_word(address), field);
+    }
 }
 #[cfg(test)]
 mod tests {
