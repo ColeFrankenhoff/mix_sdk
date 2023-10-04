@@ -184,12 +184,12 @@ impl VirtualMachine{
     pub fn MUL(&mut self, address: u32, field: u8) -> i32{
         let v = self.get_word(address).unwrap().get_value(self.byte_size) as i64;
         let max_word_val: i64 = self.byte_size.pow(4) as i64 - 1;
-        let rax_val: i64 = (v * self.rA.get_value(self.byte_size) as i64);
+        let rax_val: i64 = v * self.rA.get_value(self.byte_size) as i64;
         let rx_val = (rax_val % max_word_val) as i32;
-        let ra_val = ((rax_val - rx_val) / max_word_val) as i32;
+        let ra_val = ((rax_val - rx_val as i64) as i32 / (max_word_val as i32)) as i32;
         self.rA.store_value(ra_val, self.byte_size);
         self.rX.store_value(rx_val, self.byte_size);
-        5
+        10
         
     }
     
@@ -205,62 +205,103 @@ impl VirtualMachine{
     }
 
     pub fn shift(&mut self, address: u32, field: u8) -> i32{
-
+        //TODO: Stub
     }
 
     pub fn MOVE(&mut self, address: u32, field: u8) -> i32{
-
+        //TODO: Stub
     }
 
     pub fn LDA(&mut self, address: u32, field: u8) -> i32{
+        self.rA.store_value(self.load_v(address, field).unwrap(), self.byte_size);
+        2
 
     }
 
     pub fn LD1(&mut self, address: u32, field: u8) -> i32{
-
+        let val = self.load_v(address, field).unwrap();
+        self.rI1.store_value(val, self.byte_size);
+        2
     }
     
     pub fn LD2(&mut self, address: u32, field: u8) -> i32{
-
+        let val = self.load_v(address, field).unwrap();
+        self.rI2.store_value(val, self.byte_size);
+        2
     }
     pub fn LD3(&mut self, address: u32, field: u8) -> i32{
+        let val = self.load_v(address, field).unwrap();
+        self.rI3.store_value(val, self.byte_size);
+        2
 
     }
     pub fn LD4(&mut self, address: u32, field: u8) -> i32{
+        let val = self.load_v(address, field).unwrap();
+        self.rI4.store_value(val, self.byte_size);
+        2
 
     }
     pub fn LD5(&mut self, address: u32, field: u8) -> i32{
+        let val = self.load_v(address, field).unwrap();
+        self.rI5.store_value(val, self.byte_size);
+        2
 
     }
     pub fn LD6(&mut self, address: u32, field: u8) -> i32{
+        let val = self.load_v(address, field).unwrap();
+        self.rI6.store_value(val, self.byte_size);
+        2
 
     }
     pub fn LDX(&mut self, address: u32, field: u8) -> i32{
+        self.rX.store_value(self.load_v(address, field).unwrap(), self.byte_size);
+        2
 
     }
     pub fn LDAN(&mut self, address: u32, field: u8) -> i32{
+        self.rA.store_value(-self.load_v(address, field).unwrap(), self.byte_size);
+        2
 
     }
     pub fn LD1N(&mut self, address: u32, field: u8) -> i32{
+        let val = -self.load_v(address, field).unwrap();
+        self.rI1.store_value(val, self.byte_size);
+        2
 
     }
     pub fn LD2N(&mut self, address: u32, field: u8) -> i32{
-
+        let val = -self.load_v(address, field).unwrap();
+        self.rI2.store_value(val, self.byte_size);
+        2
     }
     pub fn LD3N(&mut self, address: u32, field: u8) -> i32{
+        let val = -self.load_v(address, field).unwrap();
+        self.rI3.store_value(val, self.byte_size);
+        2
 
     }
     pub fn LD4N(&mut self, address: u32, field: u8) -> i32{
+        let val = -self.load_v(address, field).unwrap();
+        self.rI4.store_value(val, self.byte_size);
+        2
 
     }
     pub fn LD5N(&mut self, address: u32, field: u8) -> i32{
+        let val = -self.load_v(address, field).unwrap();
+        self.rI5.store_value(val, self.byte_size);
+        2
 
     }
     pub fn LD6N(&mut self, address: u32, field: u8) -> i32{
+        let val = -self.load_v(address, field).unwrap();
+        self.rI6.store_value(val, self.byte_size);
+        2
 
     }
     pub fn LDXN(&mut self, address: u32, field: u8) -> i32{
-
+        let val = -self.load_v(address, field).unwrap();
+        self.rI6.store_value(val, self.byte_size);
+        2
     }
 
 
