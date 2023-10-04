@@ -32,52 +32,7 @@ pub fn run_vm(mut virtual_machine: VirtualMachine){
 
 //A partial field of a word, with optional values instead
 
-#[derive(Default)]
-struct PartialField{
-    is_negative: Option<bool>,
-    byte_1: Option<u8>,
-    byte_2: Option<u8>,
-    byte_3: Option<u8>,
-    byte_4: Option<u8>,
-    byte_5: Option<u8>,
-}
 
-impl PartialField{
-    fn new(original_word: &Word, field: u8) -> Self{
-        let mut value: PartialField = Default::default();
-        
-        //The field spec for L, R is 8L + R
-        let right_field = field % 8;
-        let left_field = (field - right_field) / 8;
-        dbg!(left_field);
-        dbg!(right_field);
-
-        if (8* left_field + right_field) != field{
-            panic!("My math is ass");
-        }
-        if left_field > right_field{
-            panic!("Left field specification greater than right field specification");
-        }
-
-
-        for v in left_field..right_field + 1{
-            match v{
-                0 => value.is_negative = Some(original_word.is_negative),
-                1 => value.byte_1 = Some(original_word.byte_1),
-                2 => value.byte_2 = Some(original_word.byte_2),
-                3 => value.byte_3 = Some(original_word.byte_3),
-                4 => value.byte_4 = Some(original_word.byte_4),
-                5 => value.byte_5 = Some(original_word.byte_5),
-                _ => panic!("Invalid field supplied")
-            }
-        }
-        value
-            
-    }
-    fn get_value(&self, byte_size: u32)->i32{
-        f
-    }
-}
 
 
 ///A struct representing a MIX instruction, with format: M = indexed memory address,
@@ -96,7 +51,6 @@ struct Instruction{
 ///Returns either an execution time or -1
 ///Potential optimization: hash the opcode field pair to call instructions 
 ///defined by partial fields in one instruction
-///
 fn call_instruction(mut virtual_machine: &VirtualMachine, instruction: Word) -> i32{
     let instruction = load_instruction(virtual_machine, &instruction);
     match instruction.modifier{
@@ -201,20 +155,21 @@ fn load_instruction(virtual_machine: &VirtualMachine, instruction: &Word) -> Ins
 
 
 
-#[allow(non_snake_case)]
 
 
 ///Implementation for the MIX ISA. Every instruction depends on an opcode, indexed
 ///adress, and modification field. It is assumed that the address has already been indexed.
 ///There's probably some better way to do this, maybe involving traits
+#[allow(non_snake_case)]
 impl VirtualMachine{
     pub fn NOP(&mut self, address: u32, field: u8) -> i32{
         1
     }
 
    pub fn ADD(&mut self, address: u32, field: u8) -> i32{
-       let v = self.get_word(address).unwrap();
-       self.rA.add(&v, self.byte_size);
+       let v = self.load_v(address, field).unwrap();
+       let res = self.get_rA_val() + v;
+       self.rA.store_value(res, self.byte_size);
        2
     }
 
@@ -224,17 +179,29 @@ impl VirtualMachine{
        self.rA.add(&v, self.byte_size);
        2
     }
-
+    
+    
     pub fn MUL(&mut self, address: u32, field: u8) -> i32{
+        let v = self.get_word(address).unwrap().get_value(self.byte_size) as i64;
+        let max_word_val: i64 = self.byte_size.pow(4) as i64 - 1;
+        let rax_val: i64 = (v * self.rA.get_value(self.byte_size) as i64);
+        let rx_val = (rax_val % max_word_val) as i32;
+        let ra_val = ((rax_val - rx_val) / max_word_val) as i32;
+        self.rA.store_value(ra_val, self.byte_size);
+        self.rX.store_value(rx_val, self.byte_size);
+        5
         
     }
     
     pub fn DIV(&mut self, address: u32, field: u8) -> i32{
-
+        let rax_val = self.rX.get_value(self.byte_size) + (self.rA.get_value(self.byte_size) * self.byte_size.pow(4));
+        let quotient = rax_val/self.get_word(address).unwrap().get_value(self.byte_size);
+        10
     }
 
     pub fn special(&mut self, address: u32, field: u8) -> i32{
-
+        //TODO: Stub
+        3
     }
 
     pub fn shift(&mut self, address: u32, field: u8) -> i32{
@@ -431,10 +398,7 @@ impl VirtualMachine{
     pub fn CMPX(&mut self, address: u32, field: u8) -> i32{
 
     }
-
-    fn load_V(&self, address: u32, field: u8) -> Word{
-        let partial = PartialField::new(&self.get_word(address), field);
-    }
+    
 }
 #[cfg(test)]
 mod tests {

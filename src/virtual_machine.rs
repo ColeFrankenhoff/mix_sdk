@@ -1,3 +1,5 @@
+use std::process;
+
 #[derive(Debug, PartialEq, Eq, Default, Clone, Copy)]
 pub struct Word{
     pub is_negative: bool,
@@ -35,6 +37,7 @@ impl Word{
     }
 
     //Todo: bugs involving positive and negative zero
+    ///Parameters: value -i32, byte_size: i32
     pub fn store_value(&mut self, value: i32, byte_size: i32){
         if byte_size > 100 || byte_size < 64 {
             panic!("Invalid bytesize")
@@ -109,6 +112,75 @@ impl TwoByteWord{
     }
 }
 
+#[derive(Default, Debug, Clone, Copy)]
+struct PartialField{
+    is_negative: Option<bool>,
+    byte_1: Option<u8>,
+    byte_2: Option<u8>,
+    byte_3: Option<u8>,
+    byte_4: Option<u8>,
+    byte_5: Option<u8>,
+}
+
+impl PartialField{
+    fn new(original_word: &Word, field: u8) -> Self{
+        let mut value: PartialField = Default::default();
+        
+        //The field spec for L, R is 8L + R
+        let right_field = field % 8;
+        let left_field = (field - right_field) / 8;
+
+        if (8* left_field + right_field) != field{
+            panic!("My math is ass");
+        }
+        if left_field > right_field{
+            panic!("Left field specification greater than right field specification");
+        }
+
+
+        for v in left_field..right_field + 1{
+            match v{
+                0 => value.is_negative = Some(original_word.is_negative),
+                1 => value.byte_1 = Some(original_word.byte_1),
+                2 => value.byte_2 = Some(original_word.byte_2),
+                3 => value.byte_3 = Some(original_word.byte_3),
+                4 => value.byte_4 = Some(original_word.byte_4),
+                5 => value.byte_5 = Some(original_word.byte_5),
+                _ => panic!("Invalid field supplied")
+            }
+        }
+
+        value
+            
+    }
+    fn get_value(&self, byte_size: u32)->i32{
+       let b1_val = self.byte_1;
+       let b2_val = self.byte_2;
+       let b3_val = self.byte_3;
+       let b4_val = self.byte_4;
+       let b5_val = self.byte_5;
+        
+       let mut mag: u32 = 0;
+       let bytes = [b1_val, b2_val, b3_val, b4_val, b5_val];
+        
+       for byte in bytes{
+           
+           //This is pretty cute
+           let v = match byte{
+               Some(v) => v,
+               _ => {continue;}
+           };
+
+           mag *= byte_size;
+           mag += v as u32;
+       }
+
+        match self.is_negative.unwrap_or(false){
+           true=>-(mag as i32),
+           false=>mag as i32
+       }
+    }
+}
 pub enum Comparison{
     Equal,
     Less,
@@ -192,10 +264,46 @@ impl VirtualMachine{
         self.memory[address as usize] = updated_value;
         Ok(())
     }
+
+    ///Sets the word at the specified addres to the updated value
+    ///Parameters: adress: u32, updated_value:i32
+    pub fn set_word_value(&mut self, address: u32, updated_value: i32) -> Result<(), &'static str>{
+        if self.memory.len() as u32 - 1 < address{
+            return Err("Index out of range");
+        }
+
+        if self.memory.len() > 4000{
+            return Err("Memory stores too many possible values")
+        }
+
+        let mut v = self.memory[address as usize];
+        v.store_value(updated_value, self.byte_size);
+        Ok(())
+    }
+    pub fn get_rA_val(&self) -> i32 {
+        self.rA.get_value(self.byte_size)
+    }
+    pub fn get_rX_val(&self) -> i32 {
+        self.rX.get_value(self.byte_size)
+    }
+        
+    ///Return the value at address designated by the specified partial field
+    pub fn load_v(&self, address: u32, partial_field: u8) -> Result<i32, &'static str>{ 
+
+        let word = match self.get_word(address){
+            Ok(word) => word,
+            Err(e) => return Err(e),
+        };
+        
+        let v = PartialField::new(&word, partial_field);
+        dbg!(v);
+        Ok(v.get_value(self.byte_size as u32))
+
+    }
+
 }
 
 
-//ChatGPT Generated tests which are bad but not useless
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -350,5 +458,61 @@ mod tests {
                 assert_eq!(w1.get_value(byte), x + y);
             }
         }
+    }
+
+
+    #[test]
+    fn partial_fields(){
+        let mut word = Word::zero();
+
+        let partial_word = PartialField::new(&word, 5);
+        assert_eq!(partial_word.get_value(64), 0);
+        
+
+        word.is_negative = true;
+        word.byte_1 = 50;
+        word.byte_2 = 50;
+        
+        let expected = -3250;
+        let partial = PartialField::new(&word, 2);
+        assert_eq!(expected, partial.get_value(64));
+        
+        word.byte_3 = 60;
+        let partial_2 = PartialField::new(&word, 19);
+        let expected = 3260;
+
+        assert_eq!(expected, partial_2.get_value(64));
+
+        word.byte_1 = 50;
+        word.byte_2 = 0;
+        word.is_negative = true;
+        
+        let partial = PartialField::new(&word, 3);
+
+        let expect = (-3200 * 64) - 60;
+        assert_eq!(expect, partial.get_value(64));
+    }
+
+
+    #[test]
+    fn load_v(){
+
+        let mut w1 = Word::zero();
+        w1.is_negative = true;
+        w1.byte_1 = 50;
+        w1.byte_2 = 0;
+        let memory = vec![w1, Word::zero(), Word::zero()];
+        let vm = VirtualMachine::new(memory, 0, 64);
+        let val = vm.load_v(0, 9).unwrap();
+        assert_eq!(val, 50);
+
+
+        let val = vm.load_v(0, 10).unwrap();
+        assert_eq!(val, 3200);
+
+
+        let val = vm.load_v(0, 3).unwrap();
+        assert_eq!(val, -3200 * 64);
+ 
     }
 }
