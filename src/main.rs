@@ -1,6 +1,6 @@
 mod binary_reader;
 mod virtual_machine;
-mod vcpu;
+//mod vcpu;
 use std::env;
 use std::process;
 

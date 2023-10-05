@@ -69,22 +69,56 @@ impl Word{
 
 ///A trait to define key functionality for storing operators
 pub trait Storable{
-    //Starting from the right index of the word, load as many bytes as necessary
-    //to store at the specified index. Returns an integer value representing that.
+    
+    ///From the storable object, take the sign byte and bytes from the right index and
+    ///then store them at the specified index of the given word.
+    ///Parameters- field: a u8 representing the field spec. Byte_size: i32. word_to_store_in: word
+    ///to modify
+    fn store_val_in_word(&self, field:u8, byte_size: i32, word_to_store_in: &Word) -> Word{
+        
+        //Copy word into a mutable reference and load the integer value of the rindex 
+        let mut to_ret = word_to_store_in.clone();
+        let mut value_to_store = self.load_n_bytes(Self::get_num_bytes(field), byte_size);
 
-    pub fn get_value_to_store(&self, index:u8) -> i32{
-        let val = self.load_n_bits(Storable::get_num_bits(index));
+        //Get left and right indexes
+        let lindex = field / 8;
+        let rindex = field % 8;
+        
+        if lindex == 0{
+            to_ret.is_negative = self.is_negative()
+        }
+        let mut bytes = [to_ret.byte_1, to_ret.byte_2, to_ret.byte_3, to_ret.byte_4, to_ret.byte_5];
+        dbg!("This is a debug statement");
+        for i in lindex..(rindex + 1){
+            dbg!(i);
+            dbg!(lindex);
+            dbg!(value_to_store);
+            let byte_value = value_to_store % byte_size;
+            bytes[i as usize] = byte_value as u8;
+            value_to_store /= byte_size as i32;
+        } 
+        to_ret.byte_1 = bytes[0];
+        to_ret.byte_2 = bytes[1];
+        to_ret.byte_3 = bytes[2];
+        to_ret.byte_4 = bytes[3];
+        to_ret.byte_5 = bytes[4];
+        to_ret
 
     }
 
-    fn get_num_bits(index:u8)->i32{
+    fn get_num_bytes(index:u8)->i32{
         let rindex = index % 8;
         let lindex = index / 8;
 
-        rindex - lindex
+        (rindex - lindex) as i32
     }
     
-    fn load_n_bits(&self, num: i32, byte_size: i32)->i32;
+
+    //Load the value represented by the rightmost n mix bytes, with the sign 
+    //bit as well
+    fn load_n_bytes(&self, number_of_bytes: i32, byte_size: i32)->i32;
+
+    fn is_negative(&self)->bool;
 
 
 }
@@ -136,6 +170,33 @@ impl TwoByteWord{
         let v = self.get_value(byte_size);
         let v1 = to_add.get_value(byte_size);
         self.store_value(v + v1, byte_size);
+    }
+}
+
+
+//There are potential bugs in edge cases. Positive and negative zero won't always work perfectly
+impl Storable for TwoByteWord{
+    fn load_n_bytes(&self, number_of_bytes: i32, byte_size: i32)->i32 {
+        if number_of_bytes > 3{
+            panic!("Too many bytes specified-out of range for two_byte_words")
+        }
+        if number_of_bytes < 0{
+            panic!("Negative number of bytes specified")
+        }
+        let mut magnitude = 0;
+        if number_of_bytes < 1{
+            magnitude = 1;
+        }
+    
+            magnitude += self.byte_1 as i32;
+        }
+        if number_of_bytes == 2{
+            magnitude += self.byte_2 as i32 * byte_size as i32;
+        }
+        magnitude
+    }
+    fn is_negative(&self)->bool {
+        self.is_negative
     }
 }
 
@@ -560,5 +621,30 @@ mod tests {
         let val = vm.load_v(0, 3).unwrap();
         assert_eq!(val, -3200 * 64);
  
+    }
+    
+    #[test]
+    fn storeable_get_num_bytes(){
+        assert_eq!(5, TwoByteWord::get_num_bytes(5))
+
+    }
+
+    #[test]
+    fn two_byte_word_implements_storable(){
+        let mut two_byte = TwoByteWord::zero();
+        let mut is_negative = true;
+        let mut byte_1 = 1;
+        let mut byte_2 = 1;
+        let mut byte_3 = 1;
+        let mut byte_4 = 1;
+        let mut byte_5 = 1;
+        let mut word_to_store_in = Word {is_negative, byte_1, byte_2, byte_3, byte_4, byte_5};
+        
+        let field_spec = 9;
+        let w = two_byte.store_val_in_word(field_spec, 64, &word_to_store_in);
+        byte_1 = 0;
+        let expected = Word {is_negative, byte_1, byte_2, byte_3, byte_4, byte_5};
+        assert_eq!(expected, w);
+        
     }
 }
