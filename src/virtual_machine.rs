@@ -123,6 +123,24 @@ impl Word{
     }
 }
 
+impl Storable for Word{
+    fn load_n_bytes(&self, number_of_bytes: i32, byte_size: i32)->i32 {
+
+        if number_of_bytes < 0 || number_of_bytes > 5{
+            panic!("Field specifier out of range")
+        }
+        let list = [self.byte_1, self.byte_2, self.byte_3, self.byte_4, self.byte_5];
+        let mut to_ret = 0;
+        for i in (0..number_of_bytes as usize).rev(){
+            to_ret *= byte_size;
+            to_ret += list[i] as i32;
+        }
+        to_ret
+    }
+    fn is_negative(&self)->bool {
+        self.is_negative
+    }
+}
 
 
 #[derive(Debug, PartialEq, Eq, Default)]
