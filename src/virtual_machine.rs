@@ -81,15 +81,16 @@ pub trait Storable{
         let mut value_to_store = self.load_n_bytes(Self::get_num_bytes(field), byte_size);
 
         //Get left and right indexes
-        let lindex = field / 8;
+        let mut lindex = field / 8;
         let rindex = field % 8;
         
         if lindex == 0{
-            to_ret.is_negative = self.is_negative()
+            to_ret.is_negative = self.is_negative();
+            lindex += 1;
         }
         let mut bytes = [to_ret.byte_1, to_ret.byte_2, to_ret.byte_3, to_ret.byte_4, to_ret.byte_5];
         dbg!("This is a debug statement");
-        for i in lindex..(rindex + 1){
+        for i in (lindex - 1)..rindex{
             dbg!(i);
             dbg!(lindex);
             dbg!(value_to_store);
@@ -109,7 +110,6 @@ pub trait Storable{
     fn get_num_bytes(index:u8)->i32{
         let rindex = index % 8;
         let lindex = index / 8;
-
         (rindex - lindex) as i32
     }
     
@@ -184,17 +184,15 @@ impl Storable for TwoByteWord{
             panic!("Negative number of bytes specified")
         }
         let mut magnitude = 0;
-        if number_of_bytes < 1{
-            magnitude = 1;
-        }
     
-            magnitude += self.byte_1 as i32;
-        }
+        magnitude += self.byte_1 as i32;
+        
         if number_of_bytes == 2{
             magnitude += self.byte_2 as i32 * byte_size as i32;
         }
         magnitude
     }
+    
     fn is_negative(&self)->bool {
         self.is_negative
     }
