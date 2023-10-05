@@ -307,7 +307,8 @@ impl VirtualMachine{
 
     //Storing operators
     pub fn STA(&mut self, address: u32, field: u8) -> i32{
-
+        let value_to_store = self.get_rA_val();
+        self.set_word_value()
     }
     pub fn ST1(&mut self, address: u32, field: u8) -> i32{
 

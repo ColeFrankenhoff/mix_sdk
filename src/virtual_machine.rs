@@ -65,6 +65,33 @@ impl Word{
     }
 }
 
+
+
+///A trait to define key functionality for storing operators
+pub trait Storable{
+    //Starting from the right index of the word, load as many bytes as necessary
+    //to store at the specified index. Returns an integer value representing that.
+
+    pub fn get_value_to_store(&self, index:u8) -> i32{
+        let val = self.load_n_bits(Storable::get_num_bits(index));
+
+    }
+
+    fn get_num_bits(index:u8)->i32{
+        let rindex = index % 8;
+        let lindex = index / 8;
+
+        rindex - lindex
+    }
+    
+    fn load_n_bits(&self, num: i32, byte_size: i32)->i32;
+
+
+}
+
+
+
+
 #[derive(Debug, PartialEq, Eq, Default)]
 pub struct TwoByteWord{
     pub is_negative: bool,
@@ -265,8 +292,8 @@ impl VirtualMachine{
         Ok(())
     }
 
-    ///Sets the word at the specified addres to the updated value
-    ///Parameters: adress: u32, updated_value:i32
+    ///At the memory address specified, store the updated word value 
+    ///Parameters: address: u32, updated_value:i32
     pub fn set_word_value(&mut self, address: u32, updated_value: i32) -> Result<(), &'static str>{
         if self.memory.len() as u32 - 1 < address{
             return Err("Index out of range");
@@ -286,6 +313,25 @@ impl VirtualMachine{
     pub fn get_rX_val(&self) -> i32 {
         self.rX.get_value(self.byte_size)
     }
+    pub fn get_rI1_val(&self) -> i32 {
+        self.rI1.get_value(self.byte_size)
+    }
+    pub fn get_rI2_val(&self) -> i32 {
+        self.rI2.get_value(self.byte_size)
+    }
+    pub fn get_rI3_val(&self) -> i32 {
+        self.rI3.get_value(self.byte_size)
+    }
+    pub fn get_rI4_val(&self) -> i32 {
+        self.rI4.get_value(self.byte_size)
+    }
+    pub fn get_rI5_val(&self) -> i32 {
+        self.rI5.get_value(self.byte_size)
+    }
+    pub fn get_rI6_val(&self) -> i32 {
+        self.rI6.get_value(self.byte_size)
+    }
+    
         
     ///Return the value at address designated by the specified partial field
     pub fn load_v(&self, address: u32, partial_field: u8) -> Result<i32, &'static str>{ 
