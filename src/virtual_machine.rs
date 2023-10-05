@@ -10,62 +10,6 @@ pub struct Word{
     pub byte_5: u8,
 }
 
-//A MIX Word, with a sign bit and five one-indexed bytes
-impl Word{
-    pub fn zero()->Word{
-        Word {is_negative: false, byte_1: 0, byte_2: 0, byte_3: 0, byte_4: 0, byte_5: 0}
-    }
-
-    pub fn get_value(&self, byte_size: i32)->i32{
-        if byte_size > 100 || byte_size < 64 {
-            panic!("Invalid bytesize")
-        }
-        
-
-        let b1 = self.byte_1 as i32;
-        let b2 = self.byte_2 as i32;
-        let b3 = self.byte_3 as i32;
-        let b4 = self.byte_4 as i32;
-        let b5 = self.byte_5 as i32;
-        let magnitude = b5 + b4 * byte_size + b3 * byte_size.pow(2) + b2 * byte_size.pow(3) + b1 * byte_size.pow(4);
-        match self.is_negative{
-            true=>magnitude * -1,
-            _=> magnitude
-        }
-        
-
-    }
-
-    //Todo: bugs involving positive and negative zero
-    ///Parameters: value -i32, byte_size: i32
-    pub fn store_value(&mut self, value: i32, byte_size: i32){
-        if byte_size > 100 || byte_size < 64 {
-            panic!("Invalid bytesize")
-        }
-        
-
-        let mut val = value.abs();
-        self.byte_5 = (val % byte_size) as u8;
-        val /= byte_size;
-        self.byte_4 = (val % byte_size) as u8;
-        val /= byte_size;
-        self.byte_3 = (val % byte_size) as u8;
-        val /= byte_size;
-        self.byte_2 = (val % byte_size) as u8;
-        val /= byte_size;
-        self.byte_1 = (val % byte_size) as u8;
-
-        self.is_negative = value < 0;
-        dbg!(self.is_negative);
-    }
-    pub fn add(&mut self, to_add: &Word, byte_size: i32){
-        let x = to_add.get_value(byte_size);
-        let y = x + self.get_value(byte_size);
-        self.store_value(y, byte_size);
-    }
-}
-
-
 
 ///A trait to define key functionality for storing operators
 pub trait Storable{
@@ -124,6 +68,61 @@ pub trait Storable{
 }
 
 
+//A MIX Word, with a sign bit and five one-indexed bytes
+impl Word{
+    pub fn zero()->Word{
+        Word {is_negative: false, byte_1: 0, byte_2: 0, byte_3: 0, byte_4: 0, byte_5: 0}
+    }
+
+    pub fn get_value(&self, byte_size: i32)->i32{
+        if byte_size > 100 || byte_size < 64 {
+            panic!("Invalid bytesize")
+        }
+        
+
+        let b1 = self.byte_1 as i32;
+        let b2 = self.byte_2 as i32;
+        let b3 = self.byte_3 as i32;
+        let b4 = self.byte_4 as i32;
+        let b5 = self.byte_5 as i32;
+        let magnitude = b5 + b4 * byte_size + b3 * byte_size.pow(2) + b2 * byte_size.pow(3) + b1 * byte_size.pow(4);
+        match self.is_negative{
+            true=>magnitude * -1,
+            _=> magnitude
+        }
+        
+
+    }
+
+    //Todo: bugs involving positive and negative zero
+    ///Parameters: value -i32, byte_size: i32
+    pub fn store_value(&mut self, value: i32, byte_size: i32){
+        if byte_size > 100 || byte_size < 64 {
+            panic!("Invalid bytesize")
+        }
+        
+
+        let mut val = value.abs();
+        self.byte_5 = (val % byte_size) as u8;
+        val /= byte_size;
+        self.byte_4 = (val % byte_size) as u8;
+        val /= byte_size;
+        self.byte_3 = (val % byte_size) as u8;
+        val /= byte_size;
+        self.byte_2 = (val % byte_size) as u8;
+        val /= byte_size;
+        self.byte_1 = (val % byte_size) as u8;
+
+        self.is_negative = value < 0;
+        dbg!(self.is_negative);
+    }
+    pub fn add(&mut self, to_add: &Word, byte_size: i32){
+        let x = to_add.get_value(byte_size);
+        let y = x + self.get_value(byte_size);
+        self.store_value(y, byte_size);
+    }
+}
+
 
 
 #[derive(Debug, PartialEq, Eq, Default)]
@@ -174,7 +173,6 @@ impl TwoByteWord{
 }
 
 
-//There are potential bugs in edge cases. Positive and negative zero won't always work perfectly
 impl Storable for TwoByteWord{
     fn load_n_bytes(&self, number_of_bytes: i32, byte_size: i32)->i32 {
         if number_of_bytes > 3{
@@ -629,20 +627,39 @@ mod tests {
 
     #[test]
     fn two_byte_word_implements_storable(){
-        let mut two_byte = TwoByteWord::zero();
-        let mut is_negative = true;
-        let mut byte_1 = 1;
-        let mut byte_2 = 1;
-        let mut byte_3 = 1;
-        let mut byte_4 = 1;
-        let mut byte_5 = 1;
-        let mut word_to_store_in = Word {is_negative, byte_1, byte_2, byte_3, byte_4, byte_5};
+        let is_negative = true;
+        let byte_1 = 1;
+        let byte_2 = 1;
+        let byte_3 = 1;
+        let byte_4 = 1;
+        let byte_5 = 1;
+        let word_to_store_in = Word {is_negative, byte_1, byte_2, byte_3, byte_4, byte_5};
+        let two_byte = TwoByteWord::zero();
         
         let field_spec = 9;
         let w = two_byte.store_val_in_word(field_spec, 64, &word_to_store_in);
-        byte_1 = 0;
+        let byte_1 = 0;
         let expected = Word {is_negative, byte_1, byte_2, byte_3, byte_4, byte_5};
         assert_eq!(expected, w);
         
     }
+    #[test]
+    fn test_sign_stored(){
+        let is_negative = true;
+        let byte_1 = 1;
+        let byte_2 = 1;
+        let byte_3 = 1;
+        let byte_4 = 1;
+        let byte_5 = 1;
+        let word_to_store_in = Word {is_negative, byte_1, byte_2, byte_3, byte_4, byte_5};
+        let two_byte = TwoByteWord::zero();
+
+        let field_spec = 0;
+        let w = two_byte.store_val_in_word(field_spec, 64, &word_to_store_in);
+        let mut expected = word_to_store_in.clone();
+        expected.is_negative = false;
+        assert_eq!(w, expected);
+    }
+
+
 }
